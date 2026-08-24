@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#17365d" />
+    <link rel="icon" href="/og.png" type="image/png" />
+    <title>Fall 2027 PhD Advisor Tracker</title>
+    <meta name="description" content="A private, persistent outreach and application tracker for Fall 2027 PhD applications." />
+    <meta property="og:title" content="Advisor Atlas · Fall 2027 PhD Outreach Tracker" />
+    <meta property="og:description" content="A private, persistent command center for professor outreach, replies, follow-ups, meetings, and applications." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="__ORIGIN__/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Advisor Atlas · Fall 2027 PhD Outreach Tracker" />
+    <meta name="twitter:description" content="A private, persistent command center for professor outreach, replies, follow-ups, meetings, and applications." />
+    <meta name="twitter:image" content="__ORIGIN__/og.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-inner">
+        <a class="brand" href="#top" aria-label="PhD Advisor Tracker home">
+          <span class="brand-mark">LY</span>
+          <span><strong>Advisor Atlas</strong><small>Fall 2027 PhD search</small></span>
+        </a>
+        <div class="sync-state" id="sync-state" aria-live="polite"><span class="sync-dot"></span><span>Connecting…</span></div>
+        <nav class="header-actions" aria-label="Data actions">
+          <button class="button button-quiet" id="export-csv" type="button">Export CSV</button>
+          <button class="button button-quiet" id="export-json" type="button">Backup JSON</button>
+          <button class="button button-primary" id="import-json" type="button">Import backup</button>
+          <input id="import-file" type="file" accept="application/json,.json" hidden />
+        </nav>
+      </div>
+    </header>
+
+    <main class="page-shell" id="top">
+      <section class="hero-panel">
+        <div class="hero-copy">
+          <p class="eyebrow">Your application command center</p>
+          <h1>Make every outreach decision visible.</h1>
+          <p>One durable record for 141 research-fit professors—who to contact, what they said, when to follow up, and what moves next.</p>
+          <div class="hero-tags"><span>US · Hong Kong · Singapore</span><span>Human–AI · IR · AI & science</span><span>Last source check: Aug 2026</span></div>
+        </div>
+        <aside class="next-move" aria-labelledby="next-move-title">
+          <p class="panel-label" id="next-move-title">Next move</p>
+          <strong id="next-move-professor">Build your outreach queue</strong>
+          <span id="next-move-action">Filter to “Not contacted” and open a professor to record your next action.</span>
+          <small id="next-move-date">No deadline set</small>
+        </aside>
+      </section>
+
+      <section class="metrics-grid" aria-label="Outreach summary">
+        <button class="metric-card" data-pipeline="all" type="button"><span>Total professors</span><strong id="metric-total">141</strong><small id="metric-institutions">38 institutions</small></button>
+        <button class="metric-card" data-pipeline="contacted" type="button"><span>Contacted</span><strong id="metric-contacted">0</strong><small id="metric-contact-rate">0% of contactable</small></button>
+        <button class="metric-card" data-pipeline="replied" type="button"><span>Replies</span><strong id="metric-replies">0</strong><small id="metric-reply-rate">0% response rate</small></button>
+        <button class="metric-card metric-positive" data-pipeline="positive" type="button"><span>Positive replies</span><strong id="metric-positive">0</strong><small>encouraged or wants to talk</small></button>
+        <button class="metric-card metric-negative" data-pipeline="negative" type="button"><span>Negative replies</span><strong id="metric-negative">0</strong><small>declined, closed, or unfunded</small></button>
+        <button class="metric-card" data-pipeline="meetings" type="button"><span>Meetings</span><strong id="metric-meetings">0</strong><small>scheduled conversations</small></button>
+        <button class="metric-card" data-pipeline="applications" type="button"><span>Applications</span><strong id="metric-applications">0</strong><small id="metric-submitted">0 submitted</small></button>
+        <button class="metric-card metric-due" data-pipeline="followups" type="button"><span>Follow-ups due</span><strong id="metric-followups">0</strong><small>14 days after first contact</small></button>
+      </section>
+
+      <section class="workspace-panel" aria-labelledby="workspace-title">
+        <div class="workspace-heading">
+          <div><p class="panel-label">Professor pipeline</p><h2 id="workspace-title">Find the right next conversation</h2></div>
+          <div class="results-summary"><strong id="result-count">141</strong><span>matching professors</span></div>
+        </div>
+
+        <div class="pipeline-tabs" role="tablist" aria-label="Progress stage">
+          <button class="pipeline-tab is-active" data-pipeline="all" role="tab" aria-selected="true" type="button">All</button>
+          <button class="pipeline-tab" data-pipeline="not-contacted" role="tab" aria-selected="false" type="button">Not contacted</button>
+          <button class="pipeline-tab" data-pipeline="awaiting" role="tab" aria-selected="false" type="button">Awaiting reply</button>
+          <button class="pipeline-tab" data-pipeline="positive" role="tab" aria-selected="false" type="button">Positive</button>
+          <button class="pipeline-tab" data-pipeline="negative" role="tab" aria-selected="false" type="button">Negative</button>
+          <button class="pipeline-tab" data-pipeline="meetings" role="tab" aria-selected="false" type="button">Meetings</button>
+          <button class="pipeline-tab" data-pipeline="applications" role="tab" aria-selected="false" type="button">Applications</button>
+          <button class="pipeline-tab" data-pipeline="followups" role="tab" aria-selected="false" type="button">Follow-ups</button>
+        </div>
+
+        <div class="filter-bar">
+          <label class="search-field"><span class="sr-only">Search professors</span><input id="search" type="search" placeholder="Search professor, school, program, or research fit…" autocomplete="off" /></label>
+          <label><span>Region</span><select id="filter-region"><option value="all">All regions</option></select></label>
+          <label><span>Tier</span><select id="filter-tier"><option value="all">All tiers</option></select></label>
+          <label><span>Research track</span><select id="filter-track"><option value="all">All tracks</option></select></label>
+          <label><span>Contact route</span><select id="filter-route"><option value="all">All routes</option></select></label>
+          <label><span>Sort by</span><select id="sort-by"><option value="priority">Portfolio priority</option><option value="score">Opportunity score</option><option value="followup">Follow-up urgency</option><option value="updated">Recently updated</option><option value="name">Professor name</option></select></label>
+          <button class="clear-button" id="clear-filters" type="button">Clear filters</button>
+        </div>
+
+        <div class="table-scroll">
+          <table class="professor-table">
+            <thead>
+              <tr><th scope="col">Priority</th><th scope="col">Professor & institution</th><th scope="col">Research fit</th><th scope="col">Recruiting</th><th scope="col">Score</th><th scope="col">Progress</th><th scope="col">Next action</th><th scope="col"><span class="sr-only">Edit</span></th></tr>
+            </thead>
+            <tbody id="professor-rows"><tr><td colspan="8" class="loading-row">Loading your advisor portfolio…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="load-more-wrap"><button class="button button-quiet" id="load-more" type="button" hidden>Show 30 more</button></div>
+      </section>
+
+      <footer class="site-footer"><span>Advisor Atlas · Fall 2027</span><span>Progress is saved privately to this site. Export a JSON backup before major changes.</span></footer>
+    </main>
+
+    <dialog class="editor-dialog" id="editor-dialog" aria-labelledby="editor-title">
+      <form method="dialog" class="editor-shell" id="editor-form">
+        <header class="editor-header">
+          <div><p class="panel-label" id="editor-priority">Professor record</p><h2 id="editor-title">Update progress</h2><p id="editor-subtitle"></p></div>
+          <button class="icon-button" value="cancel" aria-label="Close editor" type="submit">×</button>
+        </header>
+        <div class="editor-body">
+          <section class="record-snapshot">
+            <div class="snapshot-score"><span>Opportunity</span><strong id="editor-score">—</strong></div>
+            <div><span class="detail-label">Research fit</span><p id="editor-fit"></p><div class="record-links"><a id="editor-official" href="#" target="_blank" rel="noreferrer">Official profile ↗</a><a id="editor-evidence" href="#" target="_blank" rel="noreferrer">Recruiting evidence ↗</a></div></div>
+          </section>
+          <details class="research-details"><summary>Recruiting, funding, and fit notes</summary><div class="detail-grid"><article><span>Recruiting</span><p id="editor-recruiting"></p></article><article><span>Funding / activity</span><p id="editor-funding"></p></article><article><span>Main risk</span><p id="editor-risk"></p></article><article><span>Application route</span><p id="editor-application-route"></p></article></div></details>
+
+          <section class="form-section"><div class="form-section-heading"><span>01</span><div><h3>Contact</h3><p>How and when you reached out.</p></div></div><div class="form-grid">
+            <label><span>Contact route</span><select name="contactRoute"><option>Email</option><option>Application only</option><option>Interest form</option><option>Local introduction</option><option>Do not contact</option><option>TBD</option></select></label>
+            <label><span>Email / contact address</span><input name="emailContact" type="text" placeholder="professor@university.edu or form URL" /></label>
+            <label class="check-field"><input name="emailed" type="checkbox" /><span><strong>Emailed / contacted</strong><small>Any direct outreach, form, or warm introduction</small></span></label>
+            <label><span>Email sent date</span><input name="emailSentDate" type="date" /></label>
+            <label class="check-field"><input name="followUpSent" type="checkbox" /><span><strong>Follow-up sent</strong><small>One concise follow-up after 14 days</small></span></label>
+          </div></section>
+
+          <section class="form-section"><div class="form-section-heading"><span>02</span><div><h3>Response</h3><p>Classify the reply and record the outcome.</p></div></div><div class="form-grid">
+            <label class="check-field"><input name="replied" type="checkbox" /><span><strong>Reply received</strong><small>Record even a generic or committee-only reply</small></span></label>
+            <label><span>Reply date</span><input name="replyDate" type="date" /></label>
+            <label><span>Response class</span><select name="responseClass"><option>N/A</option><option>Pending</option><option>Positive</option><option>Neutral</option><option>Negative</option></select></label>
+            <label><span>Disposition</span><select name="disposition"><option>Not contacted</option><option>Awaiting reply</option><option>Encouraged to apply</option><option>Wants to talk</option><option>Asked for materials</option><option>Generic reply</option><option>Committee-only</option><option>Not recruiting</option><option>No funding</option><option>Declined</option><option>Referred elsewhere</option><option>No reply after follow-up</option><option>Other</option></select></label>
+          </div></section>
+
+          <section class="form-section"><div class="form-section-heading"><span>03</span><div><h3>Meeting & application</h3><p>Move promising conversations toward a submitted application.</p></div></div><div class="form-grid">
+            <label class="check-field"><input name="meeting" type="checkbox" /><span><strong>Meeting scheduled</strong><small>Informational call or research discussion</small></span></label>
+            <label><span>Meeting date</span><input name="meetingDate" type="date" /></label>
+            <label class="check-field"><input name="applicationPlanned" type="checkbox" /><span><strong>Application planned</strong><small>Include in the working application portfolio</small></span></label>
+            <label class="check-field"><input name="applicationSubmitted" type="checkbox" /><span><strong>Application submitted</strong><small>Final application sent</small></span></label>
+          </div></section>
+
+          <section class="form-section"><div class="form-section-heading"><span>04</span><div><h3>Next action</h3><p>Leave yourself one concrete, dated next move.</p></div></div><div class="form-grid">
+            <label class="field-wide"><span>Next action</span><input name="nextAction" type="text" placeholder="Read two recent papers and draft a tailored email" /></label>
+            <label><span>Next action due</span><input name="nextActionDue" type="date" /></label>
+            <label class="field-wide"><span>Notes</span><textarea name="notes" rows="5" placeholder="Reply summary, meeting takeaways, personal connection, or statement ideas…"></textarea></label>
+          </div></section>
+        </div>
+        <footer class="editor-footer"><span id="editor-saved-at">Not updated yet</span><div><button class="button button-quiet" value="cancel" type="submit">Cancel</button><button class="button button-primary" id="save-progress" value="default" type="button">Save progress</button></div></footer>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS `professor_progress` (
+  `professor_id` text PRIMARY KEY NOT NULL,
+  `contact_route` text DEFAULT 'TBD' NOT NULL,
+  `email_contact` text DEFAULT '' NOT NULL,
+  `emailed` integer DEFAULT 0 NOT NULL,
+  `email_sent_date` text DEFAULT '' NOT NULL,
+  `follow_up_sent` integer DEFAULT 0 NOT NULL,
+  `replied` integer DEFAULT 0 NOT NULL,
+  `reply_date` text DEFAULT '' NOT NULL,
+  `response_class` text DEFAULT 'N/A' NOT NULL,
+  `disposition` text DEFAULT 'Not contacted' NOT NULL,
+  `meeting` integer DEFAULT 0 NOT NULL,
+  `meeting_date` text DEFAULT '' NOT NULL,
+  `application_planned` integer DEFAULT 0 NOT NULL,
+  `application_submitted` integer DEFAULT 0 NOT NULL,
+  `next_action` text DEFAULT '' NOT NULL,
+  `next_action_due` text DEFAULT '' NOT NULL,
+  `notes` text DEFAULT '' NOT NULL,
+  `last_updated` text DEFAULT '' NOT NULL
+);
