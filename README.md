@@ -30,7 +30,7 @@ Then open <http://127.0.0.1:4173>.
 - **Cloud saved:** the private deployed version stores updates in a Cloudflare D1 database.
 - **This tab only:** the browser has blocked local storage; export a JSON backup before closing the tab.
 
-The private deployment remains owner-only. The local mode sends no progress data to a server.
+The local mode sends no progress data to a server. The GitHub Pages deployment is public, but outreach updates, notes, dates, and contact details remain in the browser's local storage unless you deliberately export them.
 
 ## GitHub Pages
 
