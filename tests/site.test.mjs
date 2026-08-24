@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 const root = path.resolve(import.meta.dirname, "..");
 const data = JSON.parse(await fs.readFile(path.join(root, "site", "data", "professors.json"), "utf8"));
 const client = await fs.readFile(path.join(root, "site", "app.js"), "utf8");
+const pagesHtml = await fs.readFile(path.join(root, "docs", "index.html"), "utf8");
 const worker = (await import(`${pathToFileURL(path.join(root, "dist", "server", "index.js")).href}?test=${Date.now()}`)).default;
 
 test("the source roster contains 141 unique professors", () => {
@@ -32,6 +33,17 @@ test("local mode persists progress in browser storage", () => {
   assert.match(client, /window\.localStorage\.setItem\(localProgressKey/);
   assert.match(client, /Saved on this device/);
   assert.match(client, /saveLocalSnapshot\(\)/);
+});
+
+test("the GitHub Pages build works below a repository path", async () => {
+  assert.match(pagesHtml, /href="\.\/styles\.css"/);
+  assert.match(pagesHtml, /src="\.\/app\.js"/);
+  assert.match(pagesHtml, /https:\/\/weakyman45\.github\.io\/advisor-atlas\/og\.png/);
+  assert.doesNotMatch(pagesHtml, /(?:href|src)="\/(?:styles\.css|app\.js|og\.png)/);
+  assert.match(client, /hostname\.endsWith\("\.github\.io"\)/);
+  assert.match(client, /fetch\("\.\/data\/professors\.json"/);
+  const pagesData = JSON.parse(await fs.readFile(path.join(root, "docs", "data", "professors.json"), "utf8"));
+  assert.equal(pagesData.professors.length, 141);
 });
 
 test("the API returns every professor with safe defaults when storage is unavailable", async () => {

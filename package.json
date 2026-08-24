@@ -8,9 +8,10 @@
   "scripts": {
     "dev": "python3 -m http.server 4173 --directory site",
     "build": "node scripts/build-static-site.mjs",
+    "build:github-pages": "node scripts/build-github-pages.mjs",
     "start": "python3 -m http.server 4173 --directory site",
-    "test": "npm run build && node --test tests/site.test.mjs",
-    "lint": "node --check site/app.js && node --check worker/runtime.js",
+    "test": "npm run build && npm run build:github-pages && node --test tests/site.test.mjs",
+    "lint": "node --check site/app.js && node --check worker/runtime.js && node --check scripts/build-github-pages.mjs",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

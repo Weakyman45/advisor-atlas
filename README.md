@@ -32,6 +32,12 @@ Then open <http://127.0.0.1:4173>.
 
 The private deployment remains owner-only. The local mode sends no progress data to a server.
 
+## GitHub Pages
+
+Run `npm run build:github-pages` to generate the static site in `docs/`. The build uses relative asset and data paths, so it works at `https://weakyman45.github.io/advisor-atlas/`. GitHub Pages mode stores progress only in that browser; use JSON backup/restore to move records between devices.
+
+GitHub Pages websites are publicly accessible. Publishing `docs/` therefore makes the curated professor roster public even if a paid GitHub plan permits a private source repository.
+
 ## Development and verification
 
 The dependency-free production worker is generated from `site/`, `worker/runtime.js`, and the embedded professor dataset.
