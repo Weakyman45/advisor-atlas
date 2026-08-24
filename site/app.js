@@ -3,11 +3,13 @@ const state = {
   activePipeline: "all",
   visibleLimit: 30,
   persistent: false,
+  storageMode: "memory",
   editingId: null,
 };
 
 const byId = (id) => document.getElementById(id);
 const todayIso = () => new Date().toISOString().slice(0, 10);
+const localProgressKey = "advisor-atlas-progress-v1";
 const positiveDispositions = new Set(["Encouraged to apply", "Wants to talk", "Asked for materials"]);
 const negativeDispositions = new Set(["Not recruiting", "No funding", "Declined", "No reply after follow-up"]);
 const trackLabels = { A: "Human–AI", B: "IR / search", C: "AI & science", D: "Agents", E: "Core NLP / ML" };
@@ -41,6 +43,53 @@ function defaultProgress(professor) {
 
 function normalizeProfessor(professor) {
   return { ...professor, ...defaultProgress(professor), ...professor };
+}
+
+function applyProgressRecords(records) {
+  if (!Array.isArray(records)) return 0;
+  const known = new Map(state.professors.map((professor) => [professor.id, professor]));
+  let applied = 0;
+  records.forEach((record) => {
+    const professor = record && known.get(record.id);
+    if (!professor) return;
+    progressKeys.forEach((key) => {
+      if (key in record) professor[key] = record[key];
+    });
+    applied += 1;
+  });
+  return applied;
+}
+
+function enableLocalStorage() {
+  try {
+    const raw = window.localStorage.getItem(localProgressKey);
+    if (raw) {
+      const payload = JSON.parse(raw);
+      applyProgressRecords(Array.isArray(payload) ? payload : payload.records);
+    }
+    window.localStorage.setItem(localProgressKey, raw || JSON.stringify({ version: 1, records: [] }));
+    state.storageMode = "local";
+    return true;
+  } catch {
+    state.storageMode = "memory";
+    return false;
+  }
+}
+
+function saveLocalSnapshot() {
+  try {
+    const payload = {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      records: state.professors.map(progressRecord),
+    };
+    window.localStorage.setItem(localProgressKey, JSON.stringify(payload));
+    state.storageMode = "local";
+    return true;
+  } catch {
+    state.storageMode = "memory";
+    return false;
+  }
 }
 
 function escapeHtml(value) {
@@ -128,13 +177,21 @@ async function loadProfessors() {
     const payload = await response.json();
     state.professors = payload.professors.map(normalizeProfessor);
     state.persistent = payload.persistent !== false;
-    setSyncState(state.persistent ? "saved" : "preview", state.persistent ? "Cloud saved" : "Preview mode");
+    if (state.persistent) {
+      state.storageMode = "cloud";
+      setSyncState("saved", "Cloud saved");
+    } else if (enableLocalStorage()) {
+      setSyncState("local", "Saved on this device");
+    } else {
+      setSyncState("preview", "This tab only");
+    }
   } catch {
     const response = await fetch("/data/professors.json", { cache: "no-store" });
     const payload = await response.json();
     state.professors = payload.professors.map(normalizeProfessor);
     state.persistent = false;
-    setSyncState("preview", "Preview mode");
+    if (enableLocalStorage()) setSyncState("local", "Saved on this device");
+    else setSyncState("preview", "This tab only");
   }
   populateFilters();
   renderAll();
@@ -385,8 +442,14 @@ async function saveProgress() {
       setSyncState("saved", "Cloud saved");
       showToast("Progress saved.", "success");
     } else {
-      setSyncState("preview", "Preview mode");
-      showToast("Preview change saved in this tab only. The published site saves to the cloud.", "notice");
+      Object.assign(professor, saved);
+      if (saveLocalSnapshot()) {
+        setSyncState("local", "Saved on this device");
+        showToast("Progress saved privately in this browser.", "success");
+      } else {
+        setSyncState("preview", "This tab only");
+        showToast("This browser blocked local storage. Export a JSON backup before closing the tab.", "notice");
+      }
     }
     Object.assign(professor, saved);
     byId("editor-dialog").close();
@@ -455,7 +518,13 @@ async function importBackup(file) {
       const record = imported.get(professor.id);
       if (record) progressKeys.forEach((key) => { if (key in record) professor[key] = record[key]; });
     });
-    setSyncState(state.persistent ? "saved" : "preview", state.persistent ? "Cloud saved" : "Preview mode");
+    if (state.persistent) {
+      setSyncState("saved", "Cloud saved");
+    } else if (saveLocalSnapshot()) {
+      setSyncState("local", "Saved on this device");
+    } else {
+      setSyncState("preview", "This tab only");
+    }
     showToast(`Imported ${valid.length} progress records.`, "success");
     renderAll();
   } catch {

@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "..");
 const data = JSON.parse(await fs.readFile(path.join(root, "site", "data", "professors.json"), "utf8"));
+const client = await fs.readFile(path.join(root, "site", "app.js"), "utf8");
 const worker = (await import(`${pathToFileURL(path.join(root, "dist", "server", "index.js")).href}?test=${Date.now()}`)).default;
 
 test("the source roster contains 141 unique professors", () => {
@@ -24,6 +25,13 @@ test("the worker serves the product page and client assets", async () => {
   const js = await worker.fetch(new Request("https://tracker.example/app.js"), {});
   assert.equal(js.status, 200);
   assert.match(await js.text(), /loadProfessors/);
+});
+
+test("local mode persists progress in browser storage", () => {
+  assert.match(client, /advisor-atlas-progress-v1/);
+  assert.match(client, /window\.localStorage\.setItem\(localProgressKey/);
+  assert.match(client, /Saved on this device/);
+  assert.match(client, /saveLocalSnapshot\(\)/);
 });
 
 test("the API returns every professor with safe defaults when storage is unavailable", async () => {
