@@ -27,5 +27,6 @@ await fs.mkdir(distServer, { recursive: true });
 await fs.mkdir(path.join(distOpenAi, "drizzle"), { recursive: true });
 await fs.writeFile(path.join(distServer, "index.js"), serverSource);
 await fs.writeFile(path.join(distOpenAi, "hosting.json"), hostingRaw);
-await fs.copyFile(path.join(root, "drizzle", "0000_professor_progress.sql"), path.join(distOpenAi, "drizzle", "0000_professor_progress.sql"));
+const migrationFiles = (await fs.readdir(path.join(root, "drizzle"))).filter((filename) => filename.endsWith(".sql")).sort();
+await Promise.all(migrationFiles.map((filename) => fs.copyFile(path.join(root, "drizzle", filename), path.join(distOpenAi, "drizzle", filename))));
 console.log(JSON.stringify({ professors: data.professors.length, bytes: Buffer.byteLength(serverSource), output: path.join(distServer, "index.js") }));

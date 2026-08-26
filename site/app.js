@@ -16,7 +16,7 @@ const trackLabels = { A: "Human–AI", B: "IR / search", C: "AI & science", D: "
 const progressKeys = [
   "contactRoute", "emailContact", "emailed", "emailSentDate", "followUpSent", "replied", "replyDate",
   "responseClass", "disposition", "meeting", "meetingDate", "applicationPlanned", "applicationSubmitted",
-  "nextAction", "nextActionDue", "notes", "lastUpdated",
+  "nextAction", "nextActionDue", "notes", "lastUpdated", "revision",
 ];
 
 function defaultProgress(professor) {
@@ -38,6 +38,7 @@ function defaultProgress(professor) {
     nextActionDue: "",
     notes: "",
     lastUpdated: "",
+    revision: 0,
   };
 }
 
@@ -437,9 +438,19 @@ async function saveProgress() {
   let saved = { ...progress, lastUpdated: new Date().toISOString() };
   try {
     if (state.persistent) {
-      const response = await fetch("./api/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: professor.id, progress }) });
-      if (!response.ok) throw new Error(`Save returned ${response.status}`);
+      const response = await fetch("./api/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: professor.id, expectedRevision: Number(professor.revision || 0), progress }) });
       const payload = await response.json();
+      if (response.status === 409) {
+        if (payload.current) {
+          Object.assign(professor, payload.current);
+          byId("editor-dialog").close();
+          openEditor(professor.id);
+        }
+        setSyncState("error", "Review latest change");
+        showToast("This record changed elsewhere. The latest version is loaded; reapply your edit.", "notice");
+        return;
+      }
+      if (!response.ok) throw new Error(`Save returned ${response.status}`);
       saved = payload.progress;
       setSyncState("saved", "Cloud saved");
       showToast("Progress saved.", "success");
@@ -457,10 +468,8 @@ async function saveProgress() {
     byId("editor-dialog").close();
     renderAll();
   } catch {
-    Object.assign(professor, saved);
     setSyncState("error", "Save needs retry");
-    showToast("Cloud save failed. Your change remains visible in this tab; export a backup and retry.", "error");
-    renderAll();
+    showToast("Cloud save failed. Your edits remain open; please retry.", "error");
   } finally {
     button.disabled = false;
     button.textContent = "Save progress";
@@ -514,18 +523,19 @@ async function importBackup(file) {
     if (state.persistent) {
       const response = await fetch("./api/progress/import", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ records: valid }) });
       if (!response.ok) throw new Error(`Import returned ${response.status}`);
-    }
-    const imported = new Map(valid.map((record) => [record.id, record]));
-    state.professors.forEach((professor) => {
-      const record = imported.get(professor.id);
-      if (record) progressKeys.forEach((key) => { if (key in record) professor[key] = record[key]; });
-    });
-    if (state.persistent) {
+      const refresh = await fetch("./api/professors", { cache: "no-store" });
+      if (!refresh.ok) throw new Error(`Refresh returned ${refresh.status}`);
+      const refreshed = await refresh.json();
+      state.professors = refreshed.professors.map(normalizeProfessor);
       setSyncState("saved", "Cloud saved");
-    } else if (saveLocalSnapshot()) {
-      setSyncState("local", "Saved on this device");
     } else {
-      setSyncState("preview", "This tab only");
+      const imported = new Map(valid.map((record) => [record.id, record]));
+      state.professors.forEach((professor) => {
+        const record = imported.get(professor.id);
+        if (record) progressKeys.forEach((key) => { if (key in record) professor[key] = record[key]; });
+      });
+      if (saveLocalSnapshot()) setSyncState("local", "Saved on this device");
+      else setSyncState("preview", "This tab only");
     }
     showToast(`Imported ${valid.length} progress records.`, "success");
     renderAll();

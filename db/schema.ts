@@ -19,4 +19,5 @@ export const professorProgress = sqliteTable("professor_progress", {
   nextActionDue: text("next_action_due").notNull().default(""),
   notes: text("notes").notNull().default(""),
   lastUpdated: text("last_updated").notNull().default(""),
+  revision: integer("revision").notNull().default(0),
 });
